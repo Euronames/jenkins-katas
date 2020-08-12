@@ -17,11 +17,19 @@ pipeline {
 
           }
           steps {
+            unstash 'code'
             sh 'ci/build-app.sh'
             archiveArtifacts 'app/build/libs/'
             sh 'ls -a'
             deleteDir()
             sh 'ls -a'
+            skipDefaultCheckout true
+          }
+        }
+
+        stage('__clone down__') {
+          steps {
+            stash(excludes: '.git', name: 'code')
           }
         }
 
