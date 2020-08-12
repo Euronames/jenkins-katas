@@ -1,6 +1,12 @@
 pipeline {
   agent any
   stages {
+    stage('__clone down__') {
+      steps {
+        stash(excludes: '.git', name: 'code')
+      }
+    }
+
     stage('Parallel execution') {
       parallel {
         stage('Say Hello') {
@@ -26,12 +32,6 @@ pipeline {
           }
         }
 
-        stage('__clone down__') {
-          steps {
-            stash(excludes: '.git', name: 'code')
-          }
-        }
-
       }
     }
 
@@ -49,5 +49,17 @@ pipeline {
       }
     }
 
+    stage('docker_push') {
+      steps {
+        unstash 'code'
+        sh 'ci/build-docker.sh'
+        sh 'echo "$DOCKERCREDS_PSW" | docker login -u "$DOCKERCREDS_USR" --password-stdin'
+        sh 'ci/push-docker.sh'
+      }
+    }
+
+  }
+  environment {
+    DOCKERCREDS = credentials('docker_login')
   }
 }
