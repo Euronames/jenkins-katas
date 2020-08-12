@@ -1,7 +1,7 @@
 pipeline {
   agent any
   stages {
-    stage('__clone down__') {
+    stage('Clone Down') {
       options {
         skipDefaultCheckout(true)
       }
@@ -11,51 +11,48 @@ pipeline {
     }
 
     stage('Parallel execution') {
-      options {
-        skipDefaultCheckout(true)
-      }
       parallel {
         stage('Say Hello') {
-          options {
-            skipDefaultCheckout(true)
-          }
           steps {
             sh 'echo "hello world"'
           }
         }
 
-        stage('build app') {
+        stage('Build App') {
           agent {
             docker {
               image 'gradle:jdk11'
             }
 
           }
-          options {
-            skipDefaultCheckout(true)
+          when {
+            beforeAgent true
+            branch 'master'
           }
           steps {
-            unstash 'code'
             sh 'ci/build-app.sh'
-            archiveArtifacts 'app/build/libs/'
-            stash(excludes: '.git', name: 'buildfiles')
-            sh 'ls -a'
+            stash 'code'
+            sh 'ls'
             deleteDir()
-            sh 'ls -a'
+            sh 'ls'
           }
         }
 
-        stage('test app') {
+        stage('Test App') {
           agent {
             docker {
               image 'gradle:jdk11'
             }
 
           }
-          options {
-            skipDefaultCheckout(true)
+          post {
+            always {
+              deleteDir()
+            }
+
           }
           steps {
+            unstash 'code'
             sh 'ci/unit-test-app.sh'
             junit 'app/build/test-results/test/TEST-*.xml'
           }
@@ -64,46 +61,33 @@ pipeline {
       }
     }
 
-    stage('docker_push') {
-      when {
-        branch 'master'
-      }
+    stage('push docker app') {
       environment {
-        docker_username = 'euronames'
         DOCKERCREDS = credentials('docker_login')
       }
-      options {
-        skipDefaultCheckout(true)
-      }
       steps {
-        unstash 'buildfiles'
+        unstash 'code'
         sh 'ci/build-docker.sh'
         sh 'echo "$DOCKERCREDS_PSW" | docker login -u "$DOCKERCREDS_USR" --password-stdin'
         sh 'ci/push-docker.sh'
       }
     }
 
-    stage('component test') {
-      agent {
-        docker {
-          image 'gradle:jdk11'
-        }
-
-      }
+    stage('Component Test') {
       when {
         not {
-          branch 'dev/'
+          branch 'dev/*'
         }
 
       }
-      options {
-        skipDefaultCheckout(true)
-      }
       steps {
-        unstash 'code'
         sh 'ci/component-test.sh'
+        sh 'echo done'
       }
     }
 
+  }
+  environment {
+    docker_username = 'emilkolvigraun'
   }
 }
