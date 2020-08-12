@@ -88,6 +88,6 @@ pipeline {
 
   }
   environment {
-    docker_username = 'emilkolvigraun'
+    docker_username = 'euronames'
   }
 }
