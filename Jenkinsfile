@@ -34,24 +34,25 @@ pipeline {
           }
         }
 
-      }
-    }
+        stage('test app') {
+          agent {
+            docker {
+              image 'gradle:jdk11'
+            }
 
-    stage('test app') {
-      agent {
-        docker {
-          image 'gradle:jdk11'
+          }
+          steps {
+            sh 'ci/unit-test-app.sh'
+            junit 'app/build/test-results/test/TEST-*.xml'
+          }
         }
 
-      }
-      steps {
-        sh 'ci/unit-test-app.sh'
-        junit 'app/build/test-results/test/TEST-*.xml'
       }
     }
 
     stage('docker_push') {
       environment {
+        docker_username = 'euronames'
         DOCKERCREDS = credentials('docker_login')
       }
       steps {
