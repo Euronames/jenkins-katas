@@ -23,13 +23,14 @@ pipeline {
 
           }
           steps {
+            unstash 'code'
             sh 'ci/build-app.sh'
             archiveArtifacts 'app/build/libs/'
+            stash(excludes: '.git', name: 'buildfiles')
             sh 'ls -a'
             deleteDir()
             sh 'ls -a'
             skipDefaultCheckout true
-            stash(excludes: '.git', name: 'code')
           }
         }
 
@@ -50,16 +51,16 @@ pipeline {
     }
 
     stage('docker_push') {
+      environment {
+        DOCKERCREDS = credentials('docker_login')
+      }
       steps {
-        unstash 'code'
+        unstash 'buildfiles'
         sh 'ci/build-docker.sh'
         sh 'echo "$DOCKERCREDS_PSW" | docker login -u "$DOCKERCREDS_USR" --password-stdin'
         sh 'ci/push-docker.sh'
       }
     }
 
-  }
-  environment {
-    DOCKERCREDS = credentials('docker_login')
   }
 }
