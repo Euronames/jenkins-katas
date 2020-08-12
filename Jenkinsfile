@@ -41,6 +41,12 @@ pipeline {
             }
 
           }
+          when {
+            not {
+              branch 'dev/'
+            }
+
+          }
           steps {
             sh 'ci/unit-test-app.sh'
             junit 'app/build/test-results/test/TEST-*.xml'
@@ -51,6 +57,9 @@ pipeline {
     }
 
     stage('docker_push') {
+      when {
+        branch 'master'
+      }
       environment {
         docker_username = 'euronames'
         DOCKERCREDS = credentials('docker_login')
