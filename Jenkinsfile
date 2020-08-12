@@ -41,6 +41,19 @@ pipeline {
             }
 
           }
+          steps {
+            sh 'ci/unit-test-app.sh'
+            junit 'app/build/test-results/test/TEST-*.xml'
+          }
+        }
+
+        stage('component test') {
+          agent {
+            docker {
+              image 'gradle:jdk11'
+            }
+
+          }
           when {
             not {
               branch 'dev/'
@@ -48,8 +61,7 @@ pipeline {
 
           }
           steps {
-            sh 'ci/unit-test-app.sh'
-            junit 'app/build/test-results/test/TEST-*.xml'
+            sh 'ci/component-test.sh'
           }
         }
 
