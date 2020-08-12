@@ -2,14 +2,23 @@ pipeline {
   agent any
   stages {
     stage('__clone down__') {
+      options {
+        skipDefaultCheckout(true)
+      }
       steps {
         stash(excludes: '.git', name: 'code')
       }
     }
 
     stage('Parallel execution') {
+      options {
+        skipDefaultCheckout(true)
+      }
       parallel {
         stage('Say Hello') {
+          options {
+            skipDefaultCheckout(true)
+          }
           steps {
             sh 'echo "hello world"'
           }
@@ -22,6 +31,9 @@ pipeline {
             }
 
           }
+          options {
+            skipDefaultCheckout(true)
+          }
           steps {
             unstash 'code'
             sh 'ci/build-app.sh'
@@ -30,7 +42,6 @@ pipeline {
             sh 'ls -a'
             deleteDir()
             sh 'ls -a'
-            skipDefaultCheckout true
           }
         }
 
@@ -40,6 +51,9 @@ pipeline {
               image 'gradle:jdk11'
             }
 
+          }
+          options {
+            skipDefaultCheckout(true)
           }
           steps {
             sh 'ci/unit-test-app.sh'
@@ -57,6 +71,9 @@ pipeline {
       environment {
         docker_username = 'euronames'
         DOCKERCREDS = credentials('docker_login')
+      }
+      options {
+        skipDefaultCheckout(true)
       }
       steps {
         unstash 'buildfiles'
@@ -79,7 +96,11 @@ pipeline {
         }
 
       }
+      options {
+        skipDefaultCheckout(true)
+      }
       steps {
+        unstash 'code'
         sh 'ci/component-test.sh'
       }
     }
